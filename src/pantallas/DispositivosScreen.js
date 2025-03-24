@@ -1,9 +1,33 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 
 export default function DispositivosScreen() {
   const [ventiladorEncendido, setVentiladorEncendido] = useState(false);
   const [despertadorEncendido, setDespertadorEncendido] = useState(false);
+
+  const toggleVentilador = async () => {
+    const nuevoEstado = !ventiladorEncendido ? "on" : "off";
+    try {
+      const response = await fetch(
+        "http://172.31.219.96:5000/sensores/rele/sensor123",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ estado: nuevoEstado }),
+        }
+      );
+
+      if (response.ok) {
+        setVentiladorEncendido(!ventiladorEncendido);
+      } else {
+        Alert.alert("Error", "No se pudo cambiar el estado del ventilador.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Hubo un problema con la conexión al servidor.");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -12,7 +36,7 @@ export default function DispositivosScreen() {
       {/* BOTÓN VENTILADOR */}
       <TouchableOpacity
         style={[styles.button, ventiladorEncendido ? styles.on : styles.off]}
-        onPress={() => setVentiladorEncendido(!ventiladorEncendido)}
+        onPress={toggleVentilador}
       >
         <Text style={styles.buttonText}>
           {ventiladorEncendido ? "Apagar Ventilador" : "Encender Ventilador"}
