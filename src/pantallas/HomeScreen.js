@@ -1,5 +1,15 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+} from "react-native";
+import { LineChart } from "react-native-chart-kit";
+import { Dimensions } from "react-native";
 
 // Importar imagen local desde assets
 import perfilImg from "../../assets/perfil.png";
@@ -10,14 +20,48 @@ const InfoCard = ({ title, value, emoji }) => (
     <Text style={styles.title}>{title}</Text>
     <View style={styles.content}>
       <Text style={styles.value}>{value}</Text>
-      <Image source={{ uri: `https://emojicdn.elk.sh/${emoji}` }} style={styles.icon} />
+      <Image
+        source={{ uri: `https://emojicdn.elk.sh/${emoji}` }}
+        style={styles.icon}
+      />
     </View>
     <Text style={styles.subtitle}>Último registro</Text>
   </View>
 );
 
 export default function HomeScreen({ navigation }) {
+  const [temperatureData, setTemperatureData] = useState([]);
+  const [humidityData, setHumidityData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const userName = "Víctor";
+
+  // Obtener datos de la API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          "https://mappa-backend.onrender.com/sensores/temperatura/sensor123"
+        );
+        const data = await response.json();
+
+        // Extraer los últimos 5 datos de temperatura y humedad
+        const temperatures = data.slice(-10).map((item) => item.temperature);
+        const humidities = data.slice(-10).map((item) => item.humedad);
+
+        setTemperatureData(temperatures);
+        setHumidityData(humidities);
+        setLoading(false);
+      } catch (error) {
+        Alert.alert("Error", "No se pudieron obtener los datos del servidor.");
+        setLoading(false);
+      }
+    };
+    const interval = setInterval(fetchData, 3000);
+    return () => clearInterval(interval);
+
+    fetchData();
+  }, []);
 
   // Definir mensaje de saludo según la hora
   const hour = new Date().getHours();
@@ -32,7 +76,7 @@ export default function HomeScreen({ navigation }) {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {/* Imagen de perfil */}
       <TouchableOpacity onPress={() => navigation.navigate("Perfil")}>
         <Image source={perfilImg} style={styles.profileImage} />
@@ -42,20 +86,90 @@ export default function HomeScreen({ navigation }) {
       <Text style={styles.greeting}>{greeting}</Text>
 
       {/* Tarjetas de información */}
-      <InfoCard title="Temperatura" value="99° C" emoji="🔥" />
-      <InfoCard title="Ritmo cardiaco" value="85 BPM" emoji="❤️" />
-      <InfoCard title="Tiempo acostado" value="2:35 horas" emoji="😴" />
-    </View>
+      <InfoCard
+        title="Temperatura"
+        value={`${temperatureData[temperatureData.length - 1] || "--"}° C`}
+        emoji="🔥"
+      />
+      <InfoCard
+        title="Humedad"
+        value={`${humidityData[humidityData.length - 1] || "--"}%`}
+        emoji="💧"
+      />
+
+      {/* Gráfica de temperatura */}
+      {!loading && temperatureData.length > 0 && (
+        <View>
+          <Text style={styles.chartTitle}>Temperatura (Últimos registros)</Text>
+          <LineChart
+            data={{
+              labels: ["1", "2", "3", "4", "5"],
+              datasets: [{ data: temperatureData }],
+            }}
+            width={Dimensions.get("window").width - 40} // Ancho de la gráfica
+            height={220}
+            yAxisSuffix="°C"
+            chartConfig={{
+              backgroundColor: "#e26a00",
+              backgroundGradientFrom: "#fb8c00",
+              backgroundGradientTo: "#ffa726",
+              decimalPlaces: 1,
+              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              style: {
+                borderRadius: 16,
+              },
+              propsForDots: {
+                r: "6",
+                strokeWidth: "2",
+                stroke: "#ffa726",
+              },
+            }}
+            style={styles.chart}
+          />
+        </View>
+      )}
+
+      {/* Gráfica de humedad */}
+      {!loading && humidityData.length > 0 && (
+        <View>
+          <Text style={styles.chartTitle}>Humedad (Últimos registros)</Text>
+          <LineChart
+            data={{
+              labels: ["1", "2", "3", "4", "5"],
+              datasets: [{ data: humidityData }],
+            }}
+            width={Dimensions.get("window").width - 40} // Ancho de la gráfica
+            height={220}
+            yAxisSuffix="%"
+            chartConfig={{
+              backgroundColor: "#0000ff",
+              backgroundGradientFrom: "#4facfe",
+              backgroundGradientTo: "#00f2fe",
+              decimalPlaces: 1,
+              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              style: {
+                borderRadius: 16,
+              },
+              propsForDots: {
+                r: "6",
+                strokeWidth: "2",
+                stroke: "#00f2fe",
+              },
+            }}
+            style={styles.chart}
+          />
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
-// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#d8ecff",
-    alignItems: "center",
-    justifyContent: "center",
     padding: 20,
   },
   profileImage: {
@@ -65,6 +179,7 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#007AFF",
     marginBottom: 10,
+    alignSelf: "center",
   },
   greeting: {
     fontSize: 18,
@@ -110,5 +225,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "gray",
   },
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#001f54",
+    textAlign: "center",
+    marginVertical: 10,
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
+    alignSelf: "center",
+  },
 });
-

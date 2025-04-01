@@ -9,7 +9,7 @@ export default function DispositivosScreen() {
     const nuevoEstado = !ventiladorEncendido ? "on" : "off";
     try {
       const response = await fetch(
-        "http://172.31.219.96:5000/sensores/rele/sensor123",
+        "https://mappa-backend.onrender.com/sensores/rele/sensor123",
         {
           method: "PATCH",
           headers: {
@@ -21,6 +21,29 @@ export default function DispositivosScreen() {
 
       if (response.ok) {
         setVentiladorEncendido(!ventiladorEncendido);
+      } else {
+        Alert.alert("Error", "No se pudo cambiar el estado del ventilador.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Hubo un problema con la conexión al servidor.");
+    }
+  };
+  const toggleDespertador = async () => {
+    const nuevoEstado = !despertadorEncendido ? "on" : "off";
+    try {
+      const response = await fetch(
+        "https://mappa-backend.onrender.com/sensores/despertador/alarma",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ estado: nuevoEstado }),
+        }
+      );
+
+      if (response.ok) {
+        setDespertadorEncendido(!despertadorEncendido);
       } else {
         Alert.alert("Error", "No se pudo cambiar el estado del ventilador.");
       }
@@ -46,7 +69,7 @@ export default function DispositivosScreen() {
       {/* BOTÓN DESPERTADOR */}
       <TouchableOpacity
         style={[styles.button, despertadorEncendido ? styles.on : styles.off]}
-        onPress={() => setDespertadorEncendido(!despertadorEncendido)}
+        onPress={toggleDespertador}
       >
         <Text style={styles.buttonText}>
           {despertadorEncendido ? "Apagar Despertador" : "Encender Despertador"}
