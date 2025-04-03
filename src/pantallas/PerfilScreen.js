@@ -9,6 +9,7 @@ import {
   Button,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Slider from "@react-native-community/slider";
 
 // Importar imagen local desde assets
 import perfilImg from "../../assets/perfil.png";
@@ -17,7 +18,7 @@ export default function PerfilScreen() {
   const [userData, setUserData] = useState(null);
   const [bpmMin, setBpmMin] = useState("");
   const [bpmMax, setBpmMax] = useState("");
-  const [maxTimeLying, setMaxTimeLying] = useState("");
+  const [maxTimeLying, setMaxTimeLying] = useState(10); // Valor inicial en minutos
 
   // Cargar datos del usuario desde AsyncStorage
   useEffect(() => {
@@ -37,7 +38,8 @@ export default function PerfilScreen() {
 
         if (storedBpmMin) setBpmMin(storedBpmMin);
         if (storedBpmMax) setBpmMax(storedBpmMax);
-        if (storedMaxTimeLying) setMaxTimeLying(storedMaxTimeLying);
+        if (storedMaxTimeLying)
+          setMaxTimeLying(parseInt(storedMaxTimeLying, 10)); // Parsear a número
       } catch (error) {
         Alert.alert("Error", "No se pudieron cargar los datos del usuario.");
       }
@@ -51,7 +53,7 @@ export default function PerfilScreen() {
     try {
       await AsyncStorage.setItem("bpmMin", bpmMin);
       await AsyncStorage.setItem("bpmMax", bpmMax);
-      await AsyncStorage.setItem("maxTimeLying", maxTimeLying);
+      await AsyncStorage.setItem("maxTimeLying", maxTimeLying.toString()); // Almacenar como string
       Alert.alert(
         "Éxito",
         "Los datos adicionales se han guardado correctamente."
@@ -76,11 +78,10 @@ export default function PerfilScreen() {
           <View style={styles.infoBox}>
             <Text style={styles.infoTitle}>Información Personal</Text>
             <Text>Subscripción: {userData.subscripcion}</Text>
-            <Text>Rol: {userData.role}</Text>
             <Text>Estado: {userData.status}</Text>
-            <Text>Bpm minimo: {storedBpmMin}</Text>
-            <Text>Bpm máximo: {storedBpmMax}</Text>
-            <Text>Tiempo máximo acostado: {storedMaxTimeLying}</Text>
+            <Text>BPM Mínimo permitido: {bpmMin}</Text>
+            <Text>BPM Máximo permitido: {bpmMax}</Text>
+            <Text>Tiempo Máximo Acostado: {maxTimeLying} minutos</Text>
           </View>
         </>
       ) : (
@@ -89,28 +90,42 @@ export default function PerfilScreen() {
 
       {/* Formulario para guardar datos adicionales */}
       <View style={styles.additionalDataBox}>
-        <Text style={styles.infoTitle}>Datos Adicionales</Text>
+        <Text style={styles.sectionTitle}>Establecer BPM minimo</Text>
         <TextInput
           style={styles.input}
-          placeholder="BPM Mínimo"
+          placeholder="Ingrese BPM inicial"
           keyboardType="numeric"
           value={bpmMin}
           onChangeText={setBpmMin}
         />
+
+        <Text style={styles.sectionTitle}>Establecer BPM maximo</Text>
         <TextInput
           style={styles.input}
-          placeholder="BPM Máximo"
+          placeholder="Ingrese BPM final"
           keyboardType="numeric"
           value={bpmMax}
           onChangeText={setBpmMax}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Tiempo máximo acostado (minutos)"
-          keyboardType="numeric"
-          value={maxTimeLying}
-          onChangeText={setMaxTimeLying}
-        />
+
+        <Text style={styles.sectionTitle}>Configurar Tiempo Máximo</Text>
+        <View style={styles.sliderBox}>
+          <Text style={styles.sliderLabel}>
+            Seleccione el tiempo máximo acostado:
+          </Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={600}
+            step={10}
+            value={maxTimeLying}
+            onValueChange={(value) => setMaxTimeLying(value)}
+          />
+          <Text style={styles.sliderValue}>
+            {`Tiempo seleccionado: ${maxTimeLying} minutos`}
+          </Text>
+        </View>
+
         <Button title="Guardar Datos" onPress={handleSaveAdditionalData} />
       </View>
     </View>
@@ -163,6 +178,14 @@ const styles = StyleSheet.create({
     color: "#001f54",
     marginBottom: 10,
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#001f54",
+    marginBottom: 10,
+    alignSelf: "flex-start",
+    marginLeft: 5,
+  },
   additionalDataBox: {
     backgroundColor: "#fff",
     width: "90%",
@@ -173,6 +196,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
+  },
+  sliderBox: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  sliderLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#001f54",
+  },
+  slider: {
+    width: "100%",
+  },
+  sliderValue: {
+    fontSize: 16,
+    color: "#001f54",
   },
   input: {
     height: 40,

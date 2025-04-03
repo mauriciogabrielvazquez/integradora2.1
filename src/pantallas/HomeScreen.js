@@ -8,6 +8,7 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Importa AsyncStorage
 import { LineChart } from "react-native-chart-kit";
 import { Dimensions } from "react-native";
 
@@ -30,11 +31,32 @@ const InfoCard = ({ title, value, emoji }) => (
 );
 
 export default function HomeScreen({ navigation }) {
+  const [userName, setUserName] = useState(""); // Estado para el nombre del usuario
   const [temperatureData, setTemperatureData] = useState([]);
   const [humidityData, setHumidityData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const userName = "Víctor";
+  // Cargar el nombre del usuario desde AsyncStorage
+  useEffect(() => {
+    const loadUserName = async () => {
+      try {
+        const storedData = await AsyncStorage.getItem("userData"); // Obtener datos del usuario
+        if (storedData) {
+          const parsedData = JSON.parse(storedData); // Parsear JSON
+          setUserName(parsedData.name); // Actualizar estado con el nombre
+        } else {
+          Alert.alert("Error", "No se encontraron los datos del usuario.");
+        }
+      } catch (error) {
+        Alert.alert(
+          "Error",
+          "Ocurrió un error al cargar el nombre del usuario."
+        );
+      }
+    };
+
+    loadUserName();
+  }, []);
 
   // Obtener datos de la API
   useEffect(() => {
@@ -68,11 +90,17 @@ export default function HomeScreen({ navigation }) {
   let greeting = "¡Hola!";
 
   if (hour < 12) {
-    greeting = `¡Buenos días, ${userName}! Qué gusto verte, qué bueno que sigas vivo. ☀️`;
+    greeting = `¡Buenos días, ${
+      userName || "Usuario"
+    }! Qué gusto verte, qué bueno que sigas vivo. ☀️`;
   } else if (hour < 18) {
-    greeting = `¡Buenas tardes, ${userName}! Espero que tu día vaya bien. 🌤️`;
+    greeting = `¡Buenas tardes, ${
+      userName || "Usuario"
+    }! Espero que tu día vaya bien. 🌤️`;
   } else {
-    greeting = `¡Buenas noches, ${userName}! Descansa bien y recarga energías. 🌙`;
+    greeting = `¡Buenas noches, ${
+      userName || "Usuario"
+    }! Descansa bien y recarga energías. 🌙`;
   }
 
   return (

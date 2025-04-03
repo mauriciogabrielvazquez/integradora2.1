@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "integradora2.1",
-    "slug": "integradora2.1",
+    "slug": "integradora2-1",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,10 +19,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.chrisauri0.integradora21"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b60c9785-6071-4b14-a6b6-eb93272d35bb"
+      }
     }
   }
 }
